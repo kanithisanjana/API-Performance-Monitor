@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Add API</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static',
+          filename='style.css') }}">
+</head>
+
+<body>
+
+<h1>Add New API</h1>
+
+<form method="POST">
+
+    <label>API Name</label>
+
+    <input
+        type="text"
+        name="api_name"
+        required>
+
+    <br><br>
+
+    <label>API URL</label>
+
+    <input
+        type="url"
+        name="api_url"
+        required>
+
+    <br><br>
+
+    <button type="submit">
+        Add API
+    </button>
+
+</form>
+
+<br>
+
+<a href="/">
+    Back to Dashboard
+</a>
+
+</body>
+
+</html>

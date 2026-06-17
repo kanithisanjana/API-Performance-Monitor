@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>API Performance Monitor</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+    <h1>API Performance Monitor</h1>
+
+    <div class="actions">
+
+        <a href="/add-api">
+            <button>Add API</button>
+        </a>
+
+        <a href="/run-monitor">
+            <button>Run Monitoring</button>
+        </a>
+
+        <a href="/report">
+            <button>View Reports</button>
+        </a>
+
+        <a href="/export-csv">
+            <button>Export CSV Report</button>
+        </a>
+
+        <a href="/apis">
+            <button>Manage APIs</button>
+        </a>
+
+    </div>
+
+    <br>
+
+    <!-- Dashboard Cards -->
+
+    <div class="cards">
+
+        <div class="card">
+            <h3>Total APIs</h3>
+            <p>{{ total_apis }}</p>
+        </div>
+
+        <div class="card">
+            <h3>Total Checks</h3>
+            <p>{{ total_checks }}</p>
+        </div>
+
+        <div class="card">
+            <h3>Success</h3>
+            <p>{{ success }}</p>
+        </div>
+
+        <div class="card">
+            <h3>Failed</h3>
+            <p>{{ failed }}</p>
+        </div>
+
+        <div class="card">
+            <h3>Uptime</h3>
+            <p>{{ uptime }}%</p>
+        </div>
+
+    </div>
+
+    <br>
+
+    <!-- Search -->
+
+    <form method="GET">
+
+        <input
+            type="text"
+            name="search"
+            placeholder="Search API">
+
+        <button type="submit">
+            Search
+        </button>
+
+    </form>
+
+    <br>
+
+    <!-- Response Time Graph -->
+
+    <h2>Response Time Trend</h2>
+
+    <div class="chart-container">
+        <canvas id="responseChart"></canvas>
+    </div>
+
+    <div class="response-legend">
+
+        <span class="legend-fast">
+            ● Fast (< 200 ms)
+        </span>
+
+        <span class="legend-medium">
+            ● Medium (200 - 500 ms)
+        </span>
+
+        <span class="legend-slow">
+            ● Slow (> 500 ms)
+        </span>
+
+    </div>
+    <br>
+
+    <!-- Pie Chart -->
+
+    <h2>Success vs Failure</h2>
+
+    <div class="pie-container">
+        <canvas id="statusChart"></canvas>
+    </div>
+    <br>
+
+    <!-- Top 5 Slow APIs -->
+
+    <h2>Top 5 Slowest API Calls</h2>
+
+    <table>
+
+        <tr>
+            <th>API</th>
+            <th>Response Time</th>
+            <th>Timestamp</th>
+        </tr>
+
+        {% for api in slow_apis %}
+
+        <tr>
+            <td>{{ api[0] }}</td>
+            <td>{{ api[1] }} ms</td>
+            <td>{{ api[2] }}</td>
+        </tr>
+
+        {% endfor %}
+
+    </table>
+
+    <br>
+
+    <!-- Metrics Table -->
+
+    <h2>Latest Monitoring Logs</h2>
+
+    <table>
+
+        <tr>
+            <th>ID</th>
+            <th>API</th>
+            <th>URL</th>
+            <th>Response Time (ms)</th>
+            <th>Status</th>
+            <th>Timestamp</th>
+        </tr>
+
+        {% for row in metrics %}
+
+        <tr>
+
+            <td>{{ row[0] }}</td>
+            <td>{{ row[1] }}</td>
+            <td>{{ row[2] }}</td>
+            <td>{{ row[3] }}</td>
+
+            <td>
+
+                {% if row[4] == 200 %}
+
+                <span class="success">
+                    {{ row[4] }}
+                </span>
+
+                {% else %}
+
+                <span class="failure">
+                    {{ row[4] }}
+                </span>
+
+                {% endif %}
+
+            </td>
+
+            <td>{{ row[5] }}</td>
+
+        </tr>
+
+        {% endfor %}
+
+    </table>
+
+    <hr>
+
+    <footer>
+
+        <p>
+            API Performance Monitor<br>
+            Built using Flask, Requests, SQLite, Chart.js and Grafana
+        </p>
+
+    </footer>
+
+    <!-- Charts -->
+
+    <script>
+
+        var chartLabels = {{ labels|tojson|safe }};
+        var chartValues = {{ values|tojson|safe }};
+
+        const pointColors = chartValues.map(value => {
+
+            if(value < 200){
+                return '#22c55e'; // Green
+            }
+
+            else if(value < 500){
+                return '#f59e0b'; // Yellow
+            }
+
+            else{
+                return '#ef4444'; // Red
+            }
+
+        });
+
+        new Chart(
+            document.getElementById('responseChart'),
+            {
+                type: 'line',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        label: 'Response Time (ms)',
+                        data: chartValues,
+
+                        borderColor: function(context) {
+
+                            const chart = context.chart;
+                            const {ctx, chartArea} = chart;
+
+                            if (!chartArea) {
+                                return '#2563eb';
+                            }
+
+                            const gradient = ctx.createLinearGradient(
+                                0,
+                                chartArea.bottom,
+                                0,
+                                chartArea.top
+                            );
+
+                            gradient.addColorStop(0, '#22c55e'); // Green
+                            gradient.addColorStop(0.5, '#f59e0b'); // Yellow
+                            gradient.addColorStop(1, '#ef4444'); // Red
+
+                            return gradient;
+                        },
+                        borderWidth: 3,
+
+                        pointBackgroundColor: pointColors,
+                        pointBorderColor: pointColors,
+
+                        pointRadius: chartValues.map(v => {
+
+                            const max = Math.max(...chartValues);
+                            const min = Math.min(...chartValues);
+
+                            if(v === max || v === min){
+                                return 10;
+                            }
+
+                            return 6;
+                        }),
+                        pointHoverRadius: 8,
+
+                        fill: false,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+
+                        legend: {
+                            display: true
+                        },
+
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y + " ms";
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        );
+
+        // Success vs Failure Pie Chart
+
+        const successCount = Number("{{ success_count }}");
+        const failedCount = Number("{{ failed_count }}");
+
+        new Chart(
+            document.getElementById('statusChart'),
+            {
+                type: 'pie',
+                data: {
+                    labels: ['Success', 'Failed'],
+                    datasets: [{
+                        label: 'API Requests',
+                        data: [successCount, failedCount]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom'
+                        }
+                    }
+                }
+            }
+        );
+
+        // Auto Refresh Every 30 Seconds
+
+        setTimeout(function () {
+            location.reload();
+        }, 30000);
+
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Reports</title>
+<link rel="stylesheet"
+href="{{ url_for('static',
+filename='style.css') }}">
+</head>
+
+<body>
+
+<h1>Performance Report</h1>
+
+<h3>Average Response Time:
+{{ stats[0] }} ms</h3>
+
+<h3>Maximum Response Time:
+{{ stats[1] }} ms</h3>
+
+<h3>Minimum Response Time:
+{{ stats[2] }} ms</h3>
+
+<a href="/">Back</a>
+
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Manage APIs</title>
+    <link rel="stylesheet"
+    href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<h1>Registered APIs</h1>
+
+<table>
+
+<tr>
+<th>ID</th>
+<th>Name</th>
+<th>URL</th>
+<th>Action</th>
+</tr>
+
+{% for api in apis %}
+
+<tr>
+
+<td>{{api[0]}}</td>
+<td>{{api[1]}}</td>
+<td>{{api[2]}}</td>
+
+<td>
+<a href="/delete-api/{{api[0]}}">
+Delete
+</a>
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+<br>
+
+<a href="/">Dashboard</a>
+
+</body>
+</html>
